@@ -1,0 +1,17 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.8, pytest-9.0.2, pluggy-1.6.0 -- C:\Users\han-zongsheng\Desktop\tools\z_lib_tool\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\han-zongsheng\Desktop\tools\z_lib_tool
+configfile: pyproject.toml
+collecting ... collected 0 items / 1 error
+
+=================================== ERRORS ====================================
+_____________________ ERROR collecting tests/test_core.py _____________________
+tests\test_core.py:6: in <module>
+    @pytest.fixture
+     ^^^^^^
+E   NameError: name 'pytest' is not defined
+=========================== short test summary info ===========================
+ERROR tests/test_core.py - NameError: name 'pytest' is not defined
+!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+============================== 1 error in 0.18s ===============================

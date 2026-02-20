@@ -1,0 +1,77 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.8, pytest-9.0.2, pluggy-1.6.0 -- C:\Users\han-zongsheng\Desktop\tools\z_lib_tool\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\han-zongsheng\Desktop\tools\z_lib_tool
+configfile: pyproject.toml
+collecting ... collected 6 items
+
+tests/test_core.py::test_load_and_unload FAILED                          [ 16%]
+tests/test_core.py::test_open_read PASSED                                [ 33%]
+tests/test_core.py::test_open_write_and_save PASSED                      [ 50%]
+tests/test_core.py::test_swap_zip FAILED                                 [ 66%]
+tests/test_core.py::test_resolve PASSED                                  [ 83%]
+tests/test_core.py::test_load_nest FAILED                                [100%]
+
+================================== FAILURES ===================================
+____________________________ test_load_and_unload _____________________________
+
+z_lib_instance = <z_lib.core.Z_Lib object at 0x0000021A9EB20FB0>
+test_zip = WindowsPath('C:/Users/han-zongsheng/AppData/Local/Temp/pytest-of-han-zongsheng/pytest-2/test_load_and_unload0/test.zip')
+
+    def test_load_and_unload(z_lib_instance, test_zip):
+        # Load
+        z_lib_instance.load_zip(str(test_zip))
+>       assert normalize_path(str(test_zip)) in z_lib_instance._loaded_zips
+               ^^^^^^^^^^^^^^
+E       NameError: name 'normalize_path' is not defined
+
+tests\test_core.py:24: NameError
+________________________________ test_swap_zip ________________________________
+
+z_lib_instance = <z_lib.core.Z_Lib object at 0x0000021A9EB20320>
+tmp_path = WindowsPath('C:/Users/han-zongsheng/AppData/Local/Temp/pytest-of-han-zongsheng/pytest-2/test_swap_zip0')
+
+    def test_swap_zip(z_lib_instance, tmp_path):
+        zip1 = tmp_path / "1.zip"
+        zip2 = tmp_path / "2.zip"
+    
+        z_lib_instance.swap_zip([str(zip1), str(zip2)], create=True)
+>       assert normalize_path(str(zip1)) in z_lib_instance._loaded_zips
+               ^^^^^^^^^^^^^^
+E       NameError: name 'normalize_path' is not defined
+
+tests\test_core.py:68: NameError
+_______________________________ test_load_nest ________________________________
+
+z_lib_instance = <z_lib.core.Z_Lib object at 0x0000021A9EB22330>
+tmp_path = WindowsPath('C:/Users/han-zongsheng/AppData/Local/Temp/pytest-of-han-zongsheng/pytest-2/test_load_nest0')
+
+    def test_load_nest(z_lib_instance, tmp_path):
+        # Setup nested structure
+        # folder/
+        #   a.zip
+        #   sub/
+        #     b.zip
+    
+        folder = tmp_path / "nest"
+        folder.mkdir()
+        (folder / "sub").mkdir()
+    
+        zip1 = folder / "a.zip"
+        zip2 = folder / "sub" / "b.zip"
+    
+        with zipfile.ZipFile(zip1, "w") as zf: zf.writestr("f1", "1")
+        with zipfile.ZipFile(zip2, "w") as zf: zf.writestr("f2", "2")
+    
+        z_lib_instance.load_nest(str(folder), mode="r")
+    
+>       assert normalize_path(str(zip1)) in z_lib_instance._loaded_zips
+               ^^^^^^^^^^^^^^
+E       NameError: name 'normalize_path' is not defined
+
+tests\test_core.py:105: NameError
+=========================== short test summary info ===========================
+FAILED tests/test_core.py::test_load_and_unload - NameError: name 'normalize_...
+FAILED tests/test_core.py::test_swap_zip - NameError: name 'normalize_path' i...
+FAILED tests/test_core.py::test_load_nest - NameError: name 'normalize_path' ...
+========================= 3 failed, 3 passed in 0.17s =========================
