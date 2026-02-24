@@ -30,10 +30,14 @@ class Z_Lib:
             norm_path = normalize_path(str(abs_path))
             
             if norm_path in self._loaded_zips:
+                print(f"  📦 [Z_Lib] LOAD  ⚡ already loaded — skipped   › {norm_path}")
                 continue
-                
+
+            action = "create" if create else "open"
+            print(f"  📦 [Z_Lib] LOAD  ▶  mode={mode!r}  [{action}]   › {norm_path}")
             handle = self._backend.open(path, create=create, mode=mode)
             self._loaded_zips[norm_path] = handle
+            print(f"     └─ ✅ mounted   temp_dir={handle['temp_dir']}")
 
     def unload_zip(self, *paths: str) -> None:
         """
@@ -45,14 +49,14 @@ class Z_Lib:
             
             if norm_path not in self._loaded_zips:
                 continue
-                
+
             handle = self._loaded_zips[norm_path]
-            # Save logic is handled by backend based on handle's mode
-            # But we can explicitly control 'save' flag if we wanted force-discard.
-            # Default behavior: save if rw.
+            will_save = handle.get("mode", "rw") == "rw"
+            save_label = "💾 saving" if will_save else "🚫 discarding"
+            print(f"  📦 [Z_Lib] UNLOAD  ◀  {save_label}   › {norm_path}")
             self._backend.close(handle, save=True)
-            
             del self._loaded_zips[norm_path]
+            print(f"     └─ ✅ closed")
 
     def swap_zip(self, target_zips: List[str], create: bool = False, mode: OpenMode = "rw") -> None:
         """
@@ -61,27 +65,31 @@ class Z_Lib:
         """
         target_norm_set = {normalize_path(p) for p in target_zips}
         current_norm_set = set(self._loaded_zips.keys())
-        
-        # Unload
+
         to_unload = current_norm_set - target_norm_set
+        to_load   = target_norm_set   - current_norm_set
+        unchanged = current_norm_set  & target_norm_set
+
+        print(
+            f"  🔄 [Z_Lib] SWAP"
+            f"  │  +load={len(to_load)}  -unload={len(to_unload)}  =keep={len(unchanged)}"
+        )
+
+        # Unload
         if to_unload:
             self.unload_zip(*to_unload)
-            
+
         # Load
-        to_load = target_norm_set - current_norm_set
         if to_load:
-            # Note: We pass original paths? No, we only have normalized ones in set.
-            # We should probably iterate target_zips to preserve original strings for open()
-            # or just use normalized strings.
-            # Let's use the provided target_zips list to find ones that need loading.
-            
-            zips_to_load_args = []
-            for raw_path in target_zips:
-                if normalize_path(raw_path) in to_load:
-                    zips_to_load_args.append(raw_path)
-            
+            zips_to_load_args = [
+                raw for raw in target_zips
+                if normalize_path(raw) in to_load
+            ]
             if zips_to_load_args:
                 self.load_zip(*zips_to_load_args, create=create, mode=mode)
+
+        loaded_count = len(self._loaded_zips)
+        print(f"     └─ ✅ swap complete   loaded={loaded_count} ZIP(s)")
 
     def load_nest(self, folder: str, create: bool = False, mode: OpenMode = "r") -> None:
         """
@@ -89,24 +97,26 @@ class Z_Lib:
         Default mode is "r" as per requirements.
         """
         folder_path = Path(folder)
-        if not folder_path.exists():
-             if create:
-                 folder_path.mkdir(parents=True, exist_ok=True)
-             else:
-                 raise FileNotFoundError(f"Folder not found: {folder}")
+        print(f"  🔍 [Z_Lib] LOAD_NEST  ▶  scanning   › {normalize_path(str(folder_path.resolve()))}")
 
-        # RGlob for all zip files
-        # Note: pattern match is case sensitive on Linux, case insensitive on Windows usually.
-        # We'll use glob with standard "*.zip".
-        for zip_file in folder_path.rglob("*.zip"):
+        if not folder_path.exists():
+            if create:
+                folder_path.mkdir(parents=True, exist_ok=True)
+                print(f"     └─ 📁 folder created")
+            else:
+                raise FileNotFoundError(f"Folder not found: {folder}")
+
+        zip_files = list(folder_path.rglob("*.zip"))
+        print(f"     └─ 🗂  found {len(zip_files)} ZIP file(s)")
+        for zip_file in zip_files:
             self.load_zip(str(zip_file), create=create, mode=mode)
 
     def open(self, path: str, mode: str = "r", **kwargs) -> IO:
         """
         Open a file (local or inside ZIP) seamlessly.
         """
-        # Resolve to real path (temp path if in ZIP, absolute path if local)
         real_path = resolve_to_real_path(path, self._loaded_zips)
+        print(f"  📂 [Z_Lib] OPEN   mode={mode!r}   › {path}")
         return open(real_path, mode, **kwargs)
 
     def resolve(self, path: str) -> Path:
@@ -120,9 +130,12 @@ class Z_Lib:
         """
         Force unload all ZIPS (cleanup).
         """
-        # Create a list of keys to avoid runtime error during modification
-        for zip_path in list(self._loaded_zips):
-            self.unload_zip(zip_path)
+        remaining = list(self._loaded_zips)
+        if remaining:
+            print(f"  🧹 [Z_Lib] CLEANUP  ▶  unloading {len(remaining)} ZIP(s) ...")
+            for zip_path in remaining:
+                self.unload_zip(zip_path)
+            print(f"     └─ ✅ all ZIPs closed")
 
     def __del__(self) -> None:
         self._cleanup()

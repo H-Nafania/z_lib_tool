@@ -14,27 +14,35 @@ class Z_OS:
 
     def listdir(self, path: str) -> List[str]:
         real_path = self._z_lib.resolve(path)
-        return os.listdir(real_path)
+        print(f"  📁 [Z_OS] listdir   › {path}")
+        result = os.listdir(real_path)
+        print(f"     └─ {len(result)} entries")
+        return result
 
     def mkdir(self, path: str, mode: int = 0o777) -> None:
         real_path = self._z_lib.resolve(path)
+        print(f"  📂 [Z_OS] mkdir   › {path}")
         os.mkdir(real_path, mode)
         
     def makedirs(self, path: str, mode: int = 0o777, exist_ok: bool = False) -> None:
         real_path = self._z_lib.resolve(path)
+        print(f"  📂 [Z_OS] makedirs   exist_ok={exist_ok}   › {path}")
         os.makedirs(real_path, mode, exist_ok)
 
     def remove(self, path: str) -> None:
         real_path = self._z_lib.resolve(path)
+        print(f"  🗑  [Z_OS] remove   › {path}")
         os.remove(real_path)
         
     def rmdir(self, path: str) -> None:
         real_path = self._z_lib.resolve(path)
+        print(f"  🗑  [Z_OS] rmdir   › {path}")
         os.rmdir(real_path)
 
     def rename(self, src: str, dst: str) -> None:
         real_src = self._z_lib.resolve(src)
         real_dst = self._z_lib.resolve(dst)
+        print(f"  ✏️  [Z_OS] rename   {src} → {dst}")
         os.rename(real_src, real_dst)
 
     def walk(self, top: str, topdown: bool = True, onerror: Any = None, followlinks: bool = False) -> Iterator[Tuple[str, List[str], List[str]]]:
@@ -44,6 +52,7 @@ class Z_OS:
         自動的にディレクトリとして展開して返す。
         Yields: (仮想パス, サブディレクトリ名リスト, ファイル名リスト)
         """
+        print(f"  🔎 [Z_OS] walk   topdown={topdown}   › {top}")
         yield from self._walk_recursive(normalize_path(top), topdown, onerror, followlinks)
 
     def _walk_recursive(
